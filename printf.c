@@ -10,11 +10,15 @@
 /*                                                                            */
 /* ************************************************************************** */
 #include "printf.h"
+#include <string.h>
+#include <stdio.h>
+#include <unistd.h>
+
 int	ft_printf(const char *str, ...)
 {
 	va_list aq;
 	va_list ap;
-	int int_arg;
+	void *current_arg;
 
 	va_start(ap, str);	
 	va_copy(aq, ap);
@@ -22,21 +26,43 @@ int	ft_printf(const char *str, ...)
 	{
 		if (*str == '%')
 		{
-			while (str == ' ')
+			str++;
+			while (*str == ' ')
 				str++;
-			if (str == 'd')
-				return ;
+			if (*str == 'd')
+				ft_putnbr_fd(va_arg(aq, int), 1);
+			else if (*str == 'c')
+				ft_putchar_fd(va_arg(aq, int), 1);
+			else if (*str == 's')
+				ft_putstr_fd(va_arg(aq, char *), 1);
+			else if (*str == '%')
+				ft_putchar_fd('%', 1);
+			else if (*str == 'p' || *str == 'x')
+			{
+				char *hex = ft_ullbase(va_arg(aq, unsigned long long), "0123456789abcedf", 16, 0);
+				if (*str == 'p')
+					write(1, "0x", 2);
+				ft_putstr_fd(hex, 1);
+				free(hex);
+			}
+			str++;
 		}
+		if (!*str)
+			break;
 		write(1, str, 1);
+		str++;
 	}
-	int_arg = va_arg(aq, int);
-	printf("%d", int_arg);
 	va_end(aq);
-	write(1, str, strlen(str));
+	return (0);
 }
 
 int	main(int argc, char **argv)
 {
-	ft_printf("Bonjour", 42);
+	int n = 42;
+	const char *str = "Bonjour je m'appel %s j'ai %d ans\npointer of %d is %p\n";
+	printf(str, "Théo", 19, n, &n);
+	ft_printf(str, "Théo", 19, n, &n);
+	printf("linux return : %p\n", NULL);
+	ft_printf("I return : %p\n", NULL);
 	return (0);
 }
