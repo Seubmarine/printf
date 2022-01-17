@@ -6,7 +6,7 @@
 /*   By: tbousque <tbousque@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/23 20:03:33 by tbousque          #+#    #+#             */
-/*   Updated: 2022/01/15 01:42:07 by tbousque         ###   ########.fr       */
+/*   Updated: 2022/01/16 17:34:40 by tbousque         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 #include "printf.h"
@@ -69,7 +69,32 @@ int	get_size_of_entire_string(const char *str, va_list arg)
 			size++;
 		str++;
 	}
+	va_end(arg);
 	return (size);
+}
+
+int	ft_snprintf(char *str, int size, const char *fmt, ...)
+{
+	va_list	arg;
+	int i;
+	(void) size;
+	va_start(arg, fmt);
+	while (fmt[i])
+	{
+		if (fmt[i] == '%')
+		{
+			i++;
+			if (fmt[i] == 'c')
+				str[i] = va_arg(arg, int);
+			else if (fmt[i] == '%')
+				str[i] = '%';
+		}
+		str[i] = fmt[i];
+		i++;
+	}
+	str[i] = '\0';
+	va_end(arg);
+	return (i);
 }
 
 int	ft_printf(const char *str, ...)
@@ -77,10 +102,16 @@ int	ft_printf(const char *str, ...)
 	va_list aq;
 	va_list ap;
 	int		size;
+	char	*output;
 
 	va_start(ap, str);	
 	va_copy(aq, ap);
 	size = get_size_of_entire_string(str, aq);
-	va_end(aq);
+	output = malloc(sizeof(char) * (size + 1));
+	if (!output)
+		return (-1);
+	ft_snprintf(output, size + 1, str, ap);
+	write(1, output, size);
+	free(output);
 	return (size);
 }
