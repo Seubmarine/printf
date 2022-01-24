@@ -6,7 +6,7 @@
 /*   By: tbousque <tbousque@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/23 20:03:33 by tbousque          #+#    #+#             */
-/*   Updated: 2022/01/24 12:57:08 by tbousque         ###   ########.fr       */
+/*   Updated: 2022/01/24 15:02:10 by tbousque         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 #include "printf.h"
@@ -59,10 +59,10 @@ int	parse_size(char f, va_list arg)
 	return (-1);
 }
 
-int	get_size_of_entire_string(const char *str, va_list arg)
+size_t	get_size_of_entire_string(const char *str, va_list arg)
 {
-	int	size;
-	int	arg_size;
+	size_t	size;
+	ssize_t	arg_size;
 
 	size = 0;
 	while(*str)
@@ -91,20 +91,30 @@ int	arg_in_buf(char *buf, char fmt, size_t size, va_list arg)
 	{
 		base16 = "0123456789abcdef";
 		if (fmt == 'p')
-			ft_strlcat(buf, "0x", 2);
+		{
+			ft_strlcat(buf, "0x", size);
+			return (2 + ft_snullbase(buf + 2, size, (unsigned long long)va_arg(arg, void *), base16));
+			
+		}
 		if (fmt == 'X')
 			base16 = "0123456789ABCDEF";
-		return (ft_snullbase(buf + (2 * (fmt == 'p')), size, (unsigned long long)va_arg(arg, void *), base16));
+		return (ft_snullbase(buf, size, va_arg(arg, long long), base16));
+		
 	}
 	else if (fmt == 's')
-	{
-		char *arg_str = va_arg(arg, char *);
-		return (ft_strlcat(buf, arg_str, size));
-	}
+		return (ft_strlcat(buf, va_arg(arg, char *), size));
 	else if (fmt == 'i' || fmt == 'd')
-		return (ft_snullbase(buf, size, va_arg(arg, int), "0123456789"));
+	{
+		long i = va_arg(arg, int);
+		if (i < 0)
+		{
+			ft_strlcat(buf, "-", size);
+			return (1 + ft_snullbase(buf + 1, size, -i, "0123456789"));
+		}
+		return (ft_snullbase(buf, size, i, "0123456789"));
+	}
 	else if (fmt == 'u')
-		return (ft_snullbase(buf, size, va_arg(arg, unsigned int), "0123456789"));
+		return (ft_snullbase(buf, size, (unsigned)va_arg(arg, unsigned), "0123456789"));
 	else if (fmt == 'c')
 		buf[0] = va_arg(arg, int);
 	else if (fmt == '%')
@@ -121,7 +131,7 @@ int	ft_vsnprintf(char *buf, size_t size, const char *format, va_list ap)
 	va_copy(arg_for_buf, ap);
 	buf_index = 0;
 	format_index = 0;
-	while (buf_index < size)
+	while (buf_index < size && format[format_index])
 	{
 		if (format[format_index] == '%')
 		{
@@ -149,4 +159,23 @@ int	ft_snprintf(char *buf, size_t size, const char *format, ...)
 	how_much_writed = ft_vsnprintf(buf, size, format, ap);
 	va_end(ap);
 	return (how_much_writed);
+}
+
+int	ft_printf(const char *format, ...)
+{
+	char	*buf;
+	size_t	buf_size;
+	size_t	size_used;
+	va_list	ap;
+	va_list	arg_size;
+
+	va_start(ap, format);
+	va_copy(arg_size, ap);
+	buf_size = get_size_of_entire_string(format, arg_size) + 1;
+	buf = malloc(sizeof(char) * buf_size);
+	if (!buf)
+		return (-1);
+	size_used = ft_vsnprintf(buf, buf_size, format, ap);
+	write(1, buf, size_used);
+	return (size_used);
 }
