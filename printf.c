@@ -6,7 +6,7 @@
 /*   By: tbousque <tbousque@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/23 20:03:33 by tbousque          #+#    #+#             */
-/*   Updated: 2022/01/18 21:03:32 by tbousque         ###   ########.fr       */
+/*   Updated: 2022/01/24 12:57:08 by tbousque         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 #include "printf.h"
@@ -42,20 +42,20 @@ int get_pointer_size(void *ptr)
 	return (size);
 }
 
-int	parse_size(char f, va_list *arg)
+int	parse_size(char f, va_list arg)
 {
 	if (f == 's')
-		return (ft_strlen(va_arg(*arg, char *)));
+		return (ft_strlen(va_arg(arg, char *)));
 	else if (f == 'c' || f == '%')
 		return (1);
 	else if (f == 'x' || f == 'X')
-		return (get_int_size_in_base(va_arg(*arg, int), 16));
+		return (get_int_size_in_base(va_arg(arg, int), 16));
 	else if (f == 'd' || f == 'i')
-		return (get_int_size_in_base(va_arg(*arg, int), 10));
+		return (get_int_size_in_base(va_arg(arg, int), 10));
 	else if (f == 'u')
-		return (get_int_size_in_base((unsigned int) va_arg(*arg, unsigned int), 10));
+		return (get_int_size_in_base((unsigned int) va_arg(arg, unsigned int), 10));
 	else if (f == 'p')
-		return (get_pointer_size(va_arg(*arg, void *)));
+		return (get_pointer_size(va_arg(arg, void *)));
 	return (-1);
 }
 
@@ -69,8 +69,8 @@ int	get_size_of_entire_string(const char *str, va_list arg)
 	{
 		if (*str == '%')
 		{
-			arg_size = parse_size(*++str, &arg)
-			if (arg_size = -1)
+			arg_size = parse_size(*++str, arg);
+			if (arg_size == -1)
 				return (-1);
 			size += arg_size;
 		}
@@ -83,63 +83,70 @@ int	get_size_of_entire_string(const char *str, va_list arg)
 }
 
 //buffer size is the number of byte still assignable in str
-int	parse_buf(char fmt, char *str, size_t buffer_size, va_list arg)
+int	arg_in_buf(char *buf, char fmt, size_t size, va_list arg)
 {
 	char	*base16;
 
 	if (fmt == 'p' || fmt == 'x' || fmt == 'X')
 	{
-		base16 = "0123456789abcdef"
+		base16 = "0123456789abcdef";
 		if (fmt == 'p')
-			ft_strlcat(str, "0x");
+			ft_strlcat(buf, "0x", 2);
 		if (fmt == 'X')
-			base16 = "0123456789ABCDEF"
-		return (ft_snullbase(str + (2 * fmt == 'p'), size, (unsigned long long)va_arg(arg, void *), base16));
+			base16 = "0123456789ABCDEF";
+		return (ft_snullbase(buf + (2 * (fmt == 'p')), size, (unsigned long long)va_arg(arg, void *), base16));
 	}
 	else if (fmt == 's')
-		return (ft_strlcat(str, va_arg(arg, char *)));
+	{
+		char *arg_str = va_arg(arg, char *);
+		return (ft_strlcat(buf, arg_str, size));
+	}
 	else if (fmt == 'i' || fmt == 'd')
-		return (ft_snullbase(str, size, va_arg(arg, int), "0123456789"));
+		return (ft_snullbase(buf, size, va_arg(arg, int), "0123456789"));
 	else if (fmt == 'u')
-		return (ft_snullbase(str, size, va_arg(arg, unsigned int), "0123456789"));
+		return (ft_snullbase(buf, size, va_arg(arg, unsigned int), "0123456789"));
 	else if (fmt == 'c')
-		str[0] = va_arg(arg, int);
+		buf[0] = va_arg(arg, int);
 	else if (fmt == '%')
-		str[0] = '%';
+		buf[0] = '%';
 	return (1);
 }
 
-int	ft_snprintf(char *str, int size, const char *fmt, ...)
+int	ft_vsnprintf(char *buf, size_t size, const char *format, va_list ap)
 {
-	va_list	arg;
-	int i;
-	(void) size;
-	va_start(arg, fmt);
-	while (fmt[i])
+	va_list arg_for_buf;
+	size_t	buf_index;
+	size_t	format_index;
+	
+	va_copy(arg_for_buf, ap);
+	buf_index = 0;
+	format_index = 0;
+	while (buf_index < size)
 	{
-		str[i] = fmt[i];
-		i++;
+		if (format[format_index] == '%')
+		{
+			format_index++;
+			buf_index += arg_in_buf(buf + buf_index, format[format_index], size - buf_index, arg_for_buf);
+			format_index++;
+			
+		}
+		else
+		{
+			buf[buf_index] = format[format_index];
+			buf_index++;
+			format_index++;
+		}
 	}
-	str[i] = '\0';
-	va_end(arg);
-	return (i);
+	return (buf_index);
 }
 
-int	ft_printf(const char *str, ...)
+int	ft_snprintf(char *buf, size_t size, const char *format, ...)
 {
-	va_list aq;
-	va_list ap;
-	int		size;
-	char	*output;
+	int	how_much_writed;
+	va_list	ap;
 
-	va_start(ap, str);	
-	va_copy(aq, ap);
-	size = get_size_of_entire_string(str, aq);
-	output = malloc(sizeof(char) * (size + 1));
-	if (!output)
-		return (-1);
-	ft_snprintf(output, size + 1, str, ap);
-	write(1, output, size);
-	free(output);
-	return (size);
+	va_start(ap, format);
+	how_much_writed = ft_vsnprintf(buf, size, format, ap);
+	va_end(ap);
+	return (how_much_writed);
 }
