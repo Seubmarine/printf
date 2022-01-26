@@ -1,21 +1,25 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   printf.c                                           :+:      :+:    :+:   */
+/*   ft_printf.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: tbousque <tbousque@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/23 20:03:33 by tbousque          #+#    #+#             */
-/*   Updated: 2022/01/24 15:02:10 by tbousque         ###   ########.fr       */
+/*   Updated: 2022/01/26 17:47:53 by tbousque         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-#include "printf.h"
+#include "ft_printf.h"
 
-int get_int_size_in_base(int n, int base)
+int get_int_size_in_base(long n, int base)
 {
 	int	size;
 
-	size = 0 + (1 * n < 0);
+	if (n == 0)
+		return (1);
+	size = 0;
+	if (n < 0)
+		size++;
 	while (n)
 	{
 		n /= base;
@@ -31,7 +35,7 @@ int get_pointer_size(void *ptr)
 	unsigned long long	n;
 
 	if (ptr == NULL)
-		return (sizeof(NULL_PTR_STR) - 1);
+		return (sizeof(FT_NULL_PTR_STR) - 1);
 	n = (unsigned long long) ptr;
 	size = 2;
 	while (n)
@@ -42,18 +46,29 @@ int get_pointer_size(void *ptr)
 	return (size);
 }
 
+int get_str_size(char *str)
+{
+	if (str == NULL)
+		return (sizeof(FT_NULL_STR) - 1);
+	return (ft_strlen(str));
+}
+
 int	parse_size(char f, va_list arg)
 {
 	if (f == 's')
-		return (ft_strlen(va_arg(arg, char *)));
-	else if (f == 'c' || f == '%')
+		return (get_str_size(va_arg(arg, char *)));
+	else if (f == '%' || f == 'c')
+	{
+		if (f == 'c')
+			(void) va_arg(arg, int);
 		return (1);
+	}
 	else if (f == 'x' || f == 'X')
-		return (get_int_size_in_base(va_arg(arg, int), 16));
+		return (get_int_size_in_base(va_arg(arg, unsigned int), 16));
 	else if (f == 'd' || f == 'i')
 		return (get_int_size_in_base(va_arg(arg, int), 10));
 	else if (f == 'u')
-		return (get_int_size_in_base((unsigned int) va_arg(arg, unsigned int), 10));
+		return (get_int_size_in_base(va_arg(arg, unsigned int), 10));
 	else if (f == 'p')
 		return (get_pointer_size(va_arg(arg, void *)));
 	return (-1);
@@ -82,27 +97,33 @@ size_t	get_size_of_entire_string(const char *str, va_list arg)
 	return (size);
 }
 
-//buffer size is the number of byte still assignable in str
+//size is the number of byte still assignable in buf
 int	arg_in_buf(char *buf, char fmt, size_t size, va_list arg)
 {
 	char	*base16;
 
-	if (fmt == 'p' || fmt == 'x' || fmt == 'X')
+	base16 = "0123456789abcdef";
+	if (fmt == 'p')
 	{
-		base16 = "0123456789abcdef";
-		if (fmt == 'p')
-		{
-			ft_strlcat(buf, "0x", size);
-			return (2 + ft_snullbase(buf + 2, size, (unsigned long long)va_arg(arg, void *), base16));
-			
-		}
+		void *ptr = va_arg(arg, void *);
+		if (ptr == NULL)
+			return (ft_strlcat(buf, FT_NULL_PTR_STR, size));
+		ft_strlcat(buf, "0x", size);
+		return (2 + ft_snullbase(buf + 2, size, (unsigned long long)ptr, base16));
+	}
+	if (fmt == 'x' || fmt == 'X')
+	{
 		if (fmt == 'X')
 			base16 = "0123456789ABCDEF";
-		return (ft_snullbase(buf, size, va_arg(arg, long long), base16));
-		
+		return (ft_snullbase(buf, size, va_arg(arg, unsigned int), base16));
 	}
 	else if (fmt == 's')
-		return (ft_strlcat(buf, va_arg(arg, char *), size));
+	{
+		char *str = va_arg(arg, char *);
+		if (str == NULL)
+			return ft_strlcat(buf, FT_NULL_STR, size);
+		return (ft_strlcat(buf, str, size));
+	}
 	else if (fmt == 'i' || fmt == 'd')
 	{
 		long i = va_arg(arg, int);
@@ -169,13 +190,16 @@ int	ft_printf(const char *format, ...)
 	va_list	ap;
 	va_list	arg_size;
 
+	buf = NULL;
 	va_start(ap, format);
 	va_copy(arg_size, ap);
 	buf_size = get_size_of_entire_string(format, arg_size) + 1;
 	buf = malloc(sizeof(char) * buf_size);
 	if (!buf)
 		return (-1);
+	ft_memset(buf, 0, buf_size);
 	size_used = ft_vsnprintf(buf, buf_size, format, ap);
 	write(1, buf, size_used);
-	return (size_used);
+	free(buf);
+	return (buf_size - 1);
 }

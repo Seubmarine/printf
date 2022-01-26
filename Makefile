@@ -1,4 +1,4 @@
-SRCS = printf.c
+SRCS = ft_printf.c
 
 OBJS = $(SRCS:.c=.o)
 
@@ -8,11 +8,11 @@ CC = gcc
 
 LIBS = -L./libft -lft
 
-CFLAGS = -Wall -Wextra -Werror
+CFLAGS = -g3 -Wall -Wextra -Werror 
 
 LIBFT = libft/libft.a
 
-INCLUDES = -I libft
+INCLUDES = -I libft/includes
 
 LIBS = -L libft -lft
 

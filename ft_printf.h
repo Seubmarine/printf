@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   printf.h                                           :+:      :+:    :+:   */
+/*   ft_printf.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: tbousque <tbousque@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/24 13:49:40 by tbousque          #+#    #+#             */
-/*   Updated: 2022/01/24 12:37:09 by tbousque         ###   ########.fr       */
+/*   Updated: 2022/01/26 14:35:39 by tbousque         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,10 +15,12 @@
 # include <stdarg.h>
 # include "libft.h"
 
-# if __linux__
-#  define NULL_PTR_STR "(nil)"
-# else
-#  define NULL_PTR_STR "0x0"
+# define FT_NULL_STR "(null)"
+
+# if defined (__APPLE__)
+#  define FT_NULL_PTR_STR "0x0"
+# elif __linux__
+#  define FT_NULL_PTR_STR "(nil)"
 # endif
 
 int	ft_printf(const char *, ...);
