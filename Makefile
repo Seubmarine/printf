@@ -8,7 +8,7 @@ CC = gcc
 
 LIBS = -L./libft -lft
 
-CFLAGS = -g3 -Wall -Wextra -Werror 
+CFLAGS = -Wall -Wextra -Werror 
 
 LIBFT = libft/libft.a
 
@@ -30,11 +30,14 @@ $(LIBFT) :
 	$(CC) $(CFLAGS) $(INCLUDES) $(LIBS) $< -c
 
 clean:
+	$(MAKE) clean -C libft/
 	rm -f $(OBJS)
 
 fclean:	clean
+	$(MAKE) fclean -C libft/
 	rm -f $(NAME)
 
 re:	fclean all
+	$(MAKE) re -C libft/
 
 .PHONY: all clean fclean re
