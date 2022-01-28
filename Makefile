@@ -14,7 +14,7 @@ LIBFT = libft/libft.a
 
 INCLUDES = -I libft/includes
 
-LIBS = -L libft -lft
+LIBS = -L libft/ -lft
 
 all : $(NAME)
 
@@ -27,7 +27,7 @@ $(LIBFT) :
 	$(MAKE) -C libft/
 
 %.o: %.c
-	$(CC) $(CFLAGS) $(INCLUDES) $(LIBS) $< -c
+	$(CC) $(CFLAGS) $(INCLUDES) $< -c
 
 clean:
 	$(MAKE) clean -C libft/
